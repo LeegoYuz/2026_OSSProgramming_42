@@ -1,0 +1,19 @@
+##현재 상황
+초점: 기존 모델을 서비스에 잘 연결/ 감정 흐름 시각화 / 보고서 완성도
+스킵: 직접 모델 학습 / 데이터셋 구축
+기능: 일기 입력/감정 분석/감정 결과 출력/감정 기록 저장/감정 변화 그래프
+구조: Tokenizer→ 사전학습된 KoELECTRA 감정분석 모델→ 감정 결과 추출→ 감정 기록 저장→ 프론트에서 시각화
+
+##사용할만한 데이터셋
+1. aihub-감정이 태깅된 청소년의 자유대화
+https://aihub.or.kr/aihubdata/data/view.do?pageIndex=1&currMenu=115&topMenu=100&srchOptnCnd=OPTNCND001&searchKeyword=%EC%B2%AD%EC%86%8C%EB%85%84+%EA%B0%90%EC%A0%95&srchDetailCnd=DETAILCND001&srchOrder=ORDER001&srchPagePer=20&aihubDataSe=data&dataSetSn=71632
+
+2.국립 국어원-속성 기반 감성 분석 말뭉치
+https://kli.korean.go.kr/corpus/request/corpusRegist.do#down
+
+##참고
+KoElectra로 NSMC 감성분석 파인튜닝하기
+https://velog.io/@caligo/KoELECTRA-%EB%AA%A8%EB%8D%B8-%EC%9D%B5%ED%9E%88%EA%B8%B0
+
+
+##논의사항 1. 역할분담(프론트, 백, 데이터...) 여부
