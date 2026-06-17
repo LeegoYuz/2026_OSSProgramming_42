@@ -1,0 +1,105 @@
+project/
+├── app.py              <- (공동) FastAPI 메인 서버 코드
+├── tokenizer_model.py  <- (지우?) AI 모델 관련 코드
+├── emotion_db.py       <- (지우) 데이터베이스(JSON) 제어 코드
+├── CONSTANTS.py        <- (지우) 감정 목록 및 상수 데이터
+├── data/
+│   └── emotions.json   <- (지우) 일기 데이터가 쌓이는 곳
+├── templates/          <- (자인) HTML 파일들을 넣는 폴더
+│   ├── index.html      <- 일기 작성 및 분석 화면
+│   └── dashboard.html  <- 감정 통계(그래프) 화면
+└── static/             <- (자인) CSS, JS 등 정적 파일을 넣는 폴더
+    ├── css/
+    │   └── style.css   <- 화면 디자인 파일
+    └── js/
+        ├── main.js     <- 일기 전송 및 결과 받아오는 JS
+        └── chart.js    <- 그래프 시각화 관련 JS
+
+
+#app.py
+
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
+import random
+
+# [팀원 코드 임포트]
+import emotions_db
+from CONSTANTS import EMOTIONS_LIST, RELATING_WORDS_LIST
+# import tokenizer_model  # AI 모델 연동 시 주석 해제
+
+app = FastAPI()
+
+# 프론트엔드 정적 파일(CSS/JS) 및 HTML 템플릿 경로 설정
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+# JSON 데이터베이스 초기화
+emotions_db.init_db()
+
+# 브라우저에 화면 띄워주기
+@app.get("/")
+def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+# 프론트엔드가 보낸 데이터를 받기 위한 규격 정의
+class DiaryRequest(BaseModel):
+    sentence: str
+
+# 일기 분석 API
+@app.post("/api/analyze")
+def analyze_diary(data: DiaryRequest):
+    sentence = data.sentence
+    
+    ### [팀원 영역] 이 부분에 모델 토큰화 및 예측 로직이 들어갑니다 ###
+    # predicted_class_idx = tokenizer_model.predict(sentence)
+    # detected_emotion = EMOTIONS_LIST[predicted_class_idx]
+    
+    # 임시 테스트용 결과 (팀원분이 모델 연동을 완료하면 위 코드로 대체)
+    detected_emotion = random.choice(EMOTIONS_LIST) 
+    
+    # 팀원이 만든 DB 모듈을 사용하여 파일에 저장
+    emotions_db.add_emotion(detected_emotion)
+    
+    # CONSTANTS에서 해당 감정에 맞는 위로/응원 문장 가져오기
+    quotes = list(RELATING_WORDS_LIST.get(detected_emotion, ["오늘 하루도 고생 많으셨어요."]))
+    selected_quote = random.choice(quotes) if quotes else "당신의 하루를 응원합니다."
+
+    return {
+        "emotion": detected_emotion,
+        "message": selected_quote
+    }
+
+# 감정 기록 데이터 반환 API (그래프용)
+@app.get("/api/emotions")
+def get_emotions_history():
+    # 팀원이 만든 DB 조회 함수 호출하여 JSON 데이터를 그대로 프론트에 전달
+    return emotions_db.get_all_emotions()
+
+
+
+
+
+
+
+#launch.json 
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: FastAPI 서버 디버깅",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "app:app",         // app.py 파일의 app 객체를 실행한다는 의미
+                "--reload",        // 코드를 수정하면 서버가 자동으로 재시작되도록 설정
+                "--port",
+                "8000"
+            ],
+            "jinja": true,         // HTML 템플릿(Jinja2) 디버깅도 지원하도록 설정
+            "console": "integratedTerminal"
+        }
+    ]
+}
