@@ -18,18 +18,27 @@ project/
 
 #app.py
 
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import random
 
+app=FastAPI()
+# CORS 미들웨어 추가
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.1:5500"],  # Live Server 주소 허용
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # [팀원 코드 임포트]
 import emotions_db
 from CONSTANTS import EMOTIONS_LIST, RELATING_WORDS_LIST
 # import tokenizer_model  # AI 모델 연동 시 주석 해제
 
-app = FastAPI()
 
 # 프론트엔드 정적 파일(CSS/JS) 및 HTML 템플릿 경로 설정
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -41,7 +50,7 @@ emotions_db.init_db()
 # 브라우저에 화면 띄워주기
 @app.get("/")
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html")
 
 # 프론트엔드가 보낸 데이터를 받기 위한 규격 정의
 class DiaryRequest(BaseModel):
@@ -62,9 +71,20 @@ def analyze_diary(data: DiaryRequest):
     # 팀원이 만든 DB 모듈을 사용하여 파일에 저장
     emotions_db.add_emotion(detected_emotion)
     
-    # CONSTANTS에서 해당 감정에 맞는 위로/응원 문장 가져오기
-    quotes = list(RELATING_WORDS_LIST.get(detected_emotion, ["오늘 하루도 고생 많으셨어요."]))
-    selected_quote = random.choice(quotes) if quotes else "당신의 하루를 응원합니다."
+    raw_quotes = RELATING_WORDS_LIST.get(detected_emotion, [])
+    
+    if isinstance(raw_quotes, set) and raw_quotes:
+        quotes = list(raw_quotes)
+    elif isinstance(raw_quotes, dict) and raw_quotes:
+        quotes = list(raw_quotes.keys())
+    else:
+        quotes = []
+
+    # 만약 해당하는 응원 문장이 비어있다면 기본 문장 출력
+    if quotes:
+        selected_quote = random.choice(quotes)
+    else:
+        selected_quote = f"오늘 하루도 고생 많으셨어요. 당신의 {detected_emotion}을 응원합니다."
 
     return {
         "emotion": detected_emotion,
@@ -72,7 +92,7 @@ def analyze_diary(data: DiaryRequest):
     }
 
 # 감정 기록 데이터 반환 API (그래프용)
-@app.get("/api/emotions")
+@app.get("/api/history")
 def get_emotions_history():
     # 팀원이 만든 DB 조회 함수 호출하여 JSON 데이터를 그대로 프론트에 전달
     return emotions_db.get_all_emotions()
@@ -120,6 +140,7 @@ def get_emotions_history():
     <script src="/static/js/main.js"></script>
 </body>
 </html>
+
 
 
 #style.css
@@ -174,22 +195,19 @@ button:hover {
 {
     "version": "0.2.0",
     "configurations": [
+        
         {
-            "name": "Python: FastAPI 서버 디버깅",
-            "type": "debugpy",
+            "type": "msedge",
             "request": "launch",
-            "module": "uvicorn",
-            "args": [
-                "app:app",         // app.py 파일의 app 객체를 실행한다는 의미
-                "--reload",        // 코드를 수정하면 서버가 자동으로 재시작되도록 설정
-                "--port",
-                "8000"
-            ],
-            "jinja": true,         // HTML 템플릿(Jinja2) 디버깅도 지원하도록 설정
-            "console": "integratedTerminal"
+            "name": "Frontend: Edge에서 index.html 디버깅",
+            "url": "http://localhost:8000",
+            "webRoot": "${workspaceFolder}"
         }
     ]
 }
+
+
+
 
 #main.js
 let myChart = null; // 차트 객체를 담을 변수
@@ -239,7 +257,8 @@ async function analyzeEmotion() {
 async function loadEmotionChart() {
     try {
         // 저장된 전체 감정 데이터 가져오기
-        const response = await fetch('/api/emotions');
+        // main.js 내부 수정
+        const response = await fetch('/api/history');
         const history = await response.json(); // [{id:1, date:..., emotion:...}, ...]
 
         // 감정별 빈도수 계산을 위한 바구니
@@ -271,7 +290,7 @@ async function loadEmotionChart() {
                     data: chartData,
                     backgroundColor: [
                         '#FF6384', '#36A2EB', '#FFCE56', 
-                        '#FF9F40', '#9966FF', '#C9CBCCF', '#4BC0C0'
+                        '#FF9F40', '#9966FF', '#C9CBCF', '#4BC0C0'
                     ]
                 }]
             },
