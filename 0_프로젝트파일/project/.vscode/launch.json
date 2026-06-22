@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "type": "msedge",
+            "request": "launch",
+            "name": "Frontend: Edge에서 index.html 디버깅",
+            "url": "http://localhost:8000",
+            "webRoot": "${workspaceFolder}"
+        }
+    ]
+}
