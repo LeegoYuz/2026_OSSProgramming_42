@@ -1,0 +1,308 @@
+project/
+├── app.py              <- (공동) FastAPI 메인 서버 코드
+├── tokenizer_model.py  <- (지우?) AI 모델 관련 코드
+├── emotion_db.py       <- (지우) 데이터베이스(JSON) 제어 코드
+├── CONSTANTS.py        <- (지우) 감정 목록 및 상수 데이터
+├── data/
+│   └── emotions.json   <- (지우) 일기 데이터가 쌓이는 곳
+├── templates/          <- (자인) HTML 파일들을 넣는 폴더
+│   ├── index.html      <- 일기 작성 및 분석 화면
+│   └── dashboard.html  <- 감정 통계(그래프) 화면
+└── static/             <- (자인) CSS, JS 등 정적 파일을 넣는 폴더
+    ├── css/
+    │   └── style.css   <- 화면 디자인 파일
+    └── js/
+        ├── main.js     <- 일기 전송 및 결과 받아오는 JS
+        └── chart.js    <- 그래프 시각화 관련 JS
+
+
+#app.py
+
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
+import random
+
+app=FastAPI()
+# CORS 미들웨어 추가
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.1:5500"],  # Live Server 주소 허용
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# [팀원 코드 임포트]
+import emotions_db
+from CONSTANTS import EMOTIONS_LIST, RELATING_WORDS_LIST
+# import tokenizer_model  # AI 모델 연동 시 주석 해제
+
+
+# 프론트엔드 정적 파일(CSS/JS) 및 HTML 템플릿 경로 설정
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+# JSON 데이터베이스 초기화
+emotions_db.init_db()
+
+# 브라우저에 화면 띄워주기
+@app.get("/")
+def home(request: Request):
+    return templates.TemplateResponse(request=request, name="index.html")
+
+# 프론트엔드가 보낸 데이터를 받기 위한 규격 정의
+class DiaryRequest(BaseModel):
+    sentence: str
+
+# 일기 분석 API
+@app.post("/api/analyze")
+def analyze_diary(data: DiaryRequest):
+    sentence = data.sentence
+    
+    ### [팀원 영역] 이 부분에 모델 토큰화 및 예측 로직이 들어갑니다 ###
+    # predicted_class_idx = tokenizer_model.predict(sentence)
+    # detected_emotion = EMOTIONS_LIST[predicted_class_idx]
+    
+    # 임시 테스트용 결과 (팀원분이 모델 연동을 완료하면 위 코드로 대체)
+    detected_emotion = random.choice(EMOTIONS_LIST) 
+    
+    # 팀원이 만든 DB 모듈을 사용하여 파일에 저장
+    emotions_db.add_emotion(detected_emotion)
+    
+    raw_quotes = RELATING_WORDS_LIST.get(detected_emotion, [])
+    
+    if isinstance(raw_quotes, set) and raw_quotes:
+        quotes = list(raw_quotes)
+    elif isinstance(raw_quotes, dict) and raw_quotes:
+        quotes = list(raw_quotes.keys())
+    else:
+        quotes = []
+
+    # 만약 해당하는 응원 문장이 비어있다면 기본 문장 출력
+    if quotes:
+        selected_quote = random.choice(quotes)
+    else:
+        selected_quote = f"오늘 하루도 고생 많으셨어요. 당신의 {detected_emotion}을 응원합니다."
+
+    return {
+        "emotion": detected_emotion,
+        "message": selected_quote
+    }
+
+# 감정 기록 데이터 반환 API (그래프용)
+@app.get("/api/history")
+def get_emotions_history():
+    # 팀원이 만든 DB 조회 함수 호출하여 JSON 데이터를 그대로 프론트에 전달
+    return emotions_db.get_all_emotions()
+
+
+
+#index.html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 감정 분석 일기</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>나의 AI 감정 일기장</h1>
+        
+        <div class="input-section">
+            <textarea id="diary-input" placeholder="오늘 하루는 어땠나요? 당신의 감정을 들려주세요..."></textarea>
+            <br>
+            <button id="submit-btn" onclick="analyzeEmotion()">오늘의 감정 분석하기</button>
+        </div>
+
+        <div id="loading" style="display: none;">🤖 AI가 일기를 읽고 감정을 분석하는 중입니다...</div>
+        
+        <div id="result-section" style="display: none;">
+            <h2>분석 결과</h2>
+            <p>오늘의 감정: <strong id="emotion-result"></strong></p>
+            <p id="quote-result" style="font-style: italic; color: #555;"></p>
+        </div>
+
+        <hr>
+
+        <div class="chart-section">
+            <h2>이번 달 나의 감정 통계</h2>
+            <button onclick="loadEmotionChart()">그래프 새로고침</button>
+            <div style="width: 400px; margin: 0 auto;">
+                <canvas id="emotionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
+
+
+
+#style.css
+body {
+    font-family: 'Malgun Gothic', sans-serif;
+    background-color: #f9f9f9;
+    text-align: center;
+    padding: 20px;
+}
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+textarea {
+    width: 100%;
+    height: 150px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    resize: none;
+    font-size: 16px;
+}
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+button:hover {
+    background-color: #45a049;
+}
+#result-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #eafaf1;
+    border-radius: 5px;
+}
+.chart-section {
+    margin-top: 40px;
+}
+
+
+#launch.json(디버거 설정 파일)
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "type": "msedge",
+            "request": "launch",
+            "name": "Frontend: Edge에서 index.html 디버깅",
+            "url": "http://localhost:8000",
+            "webRoot": "${workspaceFolder}"
+        }
+    ]
+}
+
+
+
+
+#main.js
+let myChart = null; // 차트 객체를 담을 변수
+
+// 1. 일기 분석 요청 함수 (Client-side 비동기 처리)
+async function analyzeEmotion() {
+    const sentence = document.getElementById("diary-input").value.trim();
+    
+    if (!sentence) {
+        alert("내용을 입력해 주세요!");
+        return;
+    }
+
+    // 로딩창 켜고 결과창 숨기기
+    document.getElementById("loading").style.display = "block";
+    document.getElementById("result-section").style.display = "none";
+
+    try {
+        // FastAPI 서버의 /api/analyze 엔드포인트로 데이터 전송
+        const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sentence: sentence })
+        });
+
+        const data = await response.json();
+
+        // 화면에 결과 반영
+        document.getElementById("emotion-result").innerText = data.emotion;
+        document.getElementById("quote-result").innerText = data.message;
+        
+        document.getElementById("result-section").style.display = "block";
+        
+        // 분석이 끝나면 그래프도 자동으로 갱신
+        loadEmotionChart();
+
+    } catch (error) {
+        alert("서버 통신 중 오류가 발생했습니다.");
+        console.error(error);
+    } finally {
+        // 로딩창 숨기기
+        document.getElementById("loading").style.display = "none";
+    }
+}
+
+// 2. DB에서 데이터를 받아와 차트를 그리는 함수
+async function loadEmotionChart() {
+    try {
+        // 저장된 전체 감정 데이터 가져오기
+        // main.js 내부 수정
+        const response = await fetch('/api/history');
+        const history = await response.json(); // [{id:1, date:..., emotion:...}, ...]
+
+        // 감정별 빈도수 계산을 위한 바구니
+        const counts = {
+            "행복/만족": 0, "우울/피곤": 0, "불안/걱정": 0, 
+            "분노/짜증": 0, "설렘/흥분": 0, "외로움/공허": 0, "평온/안정": 0
+        };
+
+        // 데이터 개수 세기
+        history.forEach(item => {
+            if (counts[item.emotion] !== undefined) {
+                counts[item.emotion]++;
+            }
+        });
+
+        // Chart.js에 들어갈 데이터 배열 생성
+        const labels = Object.keys(counts);
+        const chartData = Object.values(counts);
+
+        // 기존에 그려진 차트가 있다면 파괴하고 새로 생성 (중복 생성 방지)
+        if (myChart) { myChart.destroy(); }
+
+        const ctx = document.getElementById('emotionChart').getContext('2d');
+        myChart = new Chart(ctx, {
+            type: 'pie', // 원형 그래프
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: chartData,
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', 
+                        '#FF9F40', '#9966FF', '#C9CBCF', '#4BC0C0'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+
+    } catch (error) {
+        console.error("차트를 불러오는 중 오류 발생:", error);
+    }
+}
+
+// 페이지가 처음 켜질 때도 자동으로 그래프를 그려줌
+window.onload = loadEmotionChart;

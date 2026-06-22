@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 감정 분석 일기</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>나의 AI 감정 일기장</h1>
+        
+        <div class="input-section">
+            <textarea id="diary-input" placeholder="오늘 하루는 어땠나요? 당신의 감정을 들려주세요..."></textarea>
+            <br>
+            <button id="submit-btn" onclick="analyzeEmotion()">오늘의 감정 분석하기</button>
+        </div>
+
+        <div id="loading" style="display: none;">🤖 AI가 일기를 읽고 감정을 분석하는 중입니다...</div>
+        
+        <div id="result-section" style="display: none;">
+            <h2>분석 결과</h2>
+            <p>오늘의 감정: <strong id="emotion-result"></strong></p>
+            <p id="quote-result" style="font-style: italic; color: #555;"></p>
+        </div>
+
+        <hr>
+
+        <div class="chart-section">
+            <h2>이번 달 나의 감정 통계</h2>
+            <button onclick="loadEmotionChart()">그래프 새로고침</button>
+            <div style="width: 400px; margin: 0 auto;">
+                <canvas id="emotionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/chart.js"></script>
+
+</body>
+</html>
