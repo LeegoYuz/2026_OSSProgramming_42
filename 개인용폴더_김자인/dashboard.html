@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>감정 대시보드</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container" style="max-width: 800px;">
+        <h1>📊 나의 감정 통계 대시보드</h1>
+        <p>그동안 기록된 감정 데이터를 분석한 결과입니다.</p>
+        
+        <div style="margin-bottom: 20px; text-align: left;">
+            <button onclick="location.href='/'" style="background-color: #2196F3;">🏠 일기 쓰러 가기</button>
+        </div>
+
+        <div class="chart-container-grid" style="display: flex; gap: 20px; justify-content: center; margin-top: 30px;">
+            <div style="flex: 1; min-width: 300px; max-width: 350px;">
+                <h3>감정 비율 (Pie Chart)</h3>
+                <canvas id="emotionPieChart"></canvas>
+            </div>
+            
+            <div style="flex: 1; min-width: 300px; max-width: 400px;">
+                <h3>감정 빈도 (Bar Chart)</h3>
+                <canvas id="emotionBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/chart.js"></script>
+</body>
+</html>
