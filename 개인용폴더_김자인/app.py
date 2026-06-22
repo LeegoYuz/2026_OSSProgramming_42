@@ -71,6 +71,9 @@ def analyze_diary(data: DiaryRequest):
         "message": selected_quote
     }
 
+@app.get("/dashboard")
+def dashboard(request: Request):
+    return templates.TemplateResponse(request=request, name="dashboard.html")
 # 감정 기록 데이터 반환 API (그래프용)
 @app.get("/api/history")
 def get_emotions_history():
