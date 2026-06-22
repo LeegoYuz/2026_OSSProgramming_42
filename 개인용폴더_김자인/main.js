@@ -91,6 +91,3 @@ async function loadEmotionChart() {
         console.error("차트를 불러오는 중 오류 발생:", error);
     }
 }
-
-// 페이지가 처음 켜질 때도 자동으로 그래프를 그려줌
-window.onload = loadEmotionChart;
