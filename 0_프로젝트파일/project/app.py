@@ -19,7 +19,7 @@ app.add_middleware(
 # [팀원 코드 임포트]
 import emotions_db
 from CONSTANTS import EMOTIONS_LIST, RELATING_WORDS_LIST
-# import tokenizer_model  # AI 모델 연동 시 주석 해제
+import tokenizer_model  # AI 모델 연동 시 주석 해제
 
 
 # 프론트엔드 정적 파일(CSS/JS) 및 HTML 템플릿 경로 설정
@@ -43,12 +43,9 @@ class DiaryRequest(BaseModel):
 def analyze_diary(data: DiaryRequest):
     sentence = data.sentence
     
-    ### [팀원 영역] 이 부분에 모델 토큰화 및 예측 로직이 들어갑니다 ###
-    # predicted_class_idx = tokenizer_model.predict(sentence)
-    # detected_emotion = EMOTIONS_LIST[predicted_class_idx]
-    
-    # 임시 테스트용 결과 (팀원분이 모델 연동을 완료하면 위 코드로 대체)
-    detected_emotion = random.choice(EMOTIONS_LIST) 
+    # 모델 토큰화 및 예측 로직
+    predicted_class_idx = tokenizer_model.predict(sentence)
+    detected_emotion = EMOTIONS_LIST[predicted_class_idx]
     
     # 팀원이 만든 DB 모듈을 사용하여 파일에 저장
     emotions_db.add_emotion(detected_emotion)
