@@ -1,4 +1,5 @@
 from tokenizer_model import predict_emotion
+import emotions_db
 
 # 예시 문장
 example_sentences = [
@@ -59,8 +60,10 @@ answers = [
 ]
 
 # 테스트 실행
+emotions_db.init_db()
 for i, sentence in enumerate(example_sentences):
     predicted = predict_emotion(sentence)
     print(f"문장: {sentence}")
     print(f"예상 감정: {answers[i]} | 모델 결과: {predicted}")
     print("-" * 50)
+    emotions_db.add_emotion(predicted)
