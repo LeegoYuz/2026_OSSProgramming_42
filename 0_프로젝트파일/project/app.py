@@ -10,7 +10,7 @@ import random
 # [팀원 코드 임포트]
 import emotions_db
 import tokenizer_model  # AI 모델 모듈 연결
-import graphs           # 주간 통계 모듈 연결 (추후 확장용)
+import graphs           # 주간 통계 모듈 연결 (확장용)
 from CONSTANTS import EMOTIONS_LIST, RELATING_WORDS_LIST
 
 app = FastAPI()

@@ -6,7 +6,7 @@ from CONSTANTS import EMOTIONS_LIST, EMOTION_LEXICON, EMPHASIS_WORDS
 import re
 import numpy as np
 
-MODEL_DIR = "monologg/koelectra-base-v3-discriminator"
+MODEL_DIR = "./model"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 tokenizer = ElectraTokenizer.from_pretrained(MODEL_DIR)
