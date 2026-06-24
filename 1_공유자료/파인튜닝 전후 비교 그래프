@@ -1,0 +1,45 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+# 1. 비교할 평가 지표 이름들
+labels = ['Accuracy', 'Precision', 'Recall', 'F1-Score']
+
+# =====================================================================
+# 🚨 [주의] 아래 수치는 예시입니다! 
+# 모델을 평가(evaluate)하고 나온 실제 점수로 숫자를 바꿔주세요.
+# =====================================================================
+
+# [파인튜닝 전] 기본 모델(깡통)의 점수 (예시: 40%대)
+before_scores = [0.45, 0.42, 0.40, 0.41] 
+
+# [파인튜닝 후] 우리가 정제한 데이터로 학습한 모델의 점수 (예시: 80%대)
+after_scores = [0.88, 0.85, 0.87, 0.86]  
+# =====================================================================
+
+# 그래프 설정
+x = np.arange(len(labels))  # x축 라벨 위치
+width = 0.35  # 막대 두께
+
+# 캔버스 생성 (크기 조정)
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 두 개의 막대그래프 나란히 그리기 (회색 vs 파란색)
+rects1 = ax.bar(x - width/2, before_scores, width, label='Before Fine-tuning', color='#D3D3D3')
+rects2 = ax.bar(x + width/2, after_scores, width, label='After Fine-tuning (Our Model)', color='#4A90E2')
+
+# 그래프 꾸미기 (제목, 축 이름 등)
+ax.set_ylabel('Scores (0.0 ~ 1.0)', fontsize=12)
+ax.set_title('Model Performance Comparison: Before vs After Fine-tuning', fontsize=16, fontweight='bold', pad=20)
+ax.set_xticks(x)
+ax.set_xticklabels(labels, fontsize=11)
+ax.set_ylim(0, 1.1) # 점수가 1.0(100%)을 넘지 않도록 여백 설정
+ax.legend(fontsize=11)
+
+# 막대 그래프 꼭대기에 정확한 소수점 수치 적어주기 (이게 있어야 보고서 퀄리티가 확 올라갑니다!)
+ax.bar_label(rects1, padding=3, fmt='%.2f')
+ax.bar_label(rects2, padding=3, fmt='%.2f')
+
+fig.tight_layout()
+
+# 그래프 화면에 띄우기 (이 화면을 캡처해서 보고서에 넣으세요!)
+plt.show()
