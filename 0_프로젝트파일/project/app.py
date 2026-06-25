@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import random
 
-# [팀원 코드 임포트]
 import emotions_db
 import tokenizer_model  # AI 모델 모듈 연결
 import graphs           # 주간 통계 모듈 연결 (확장용)
@@ -45,19 +44,19 @@ def dashboard(request: Request):
 class DiaryRequest(BaseModel):
     sentence: str
 
-# 3. 진짜 일기 분석 API (랜덤 제거 ➡️ AI 연결)
+# 3. 일기 분석 API
 @app.post("/api/analyze")
 def analyze_diary(data: DiaryRequest):
     sentence = data.sentence
     
-    # [팀원 AI 연결] 진짜 KOELECTRA 모델을 돌려 감정 텍스트를 추출합니다.
+    # 모델을 돌려 감정 텍스트를 추출합니다.
     detected_emotion = tokenizer_model.predict_emotion(sentence)
     
     # 만약 모델이 범위를 벗어나 "알 수 없음"을 뱉으면 기본값 처리
     if detected_emotion == "알 수 없음":
         detected_emotion = "평온/안정"
     
-    # [팀원 DB 연결] 추출된 감정을 emotions.json에 누적 저장합니다.
+    # 추출된 감정을 emotions.json에 누적 저장합니다.
     emotions_db.add_emotion(detected_emotion)
     
     # CONSTANTS에서 해당 감정에 맞는 위로/응원 문장 가져오기
