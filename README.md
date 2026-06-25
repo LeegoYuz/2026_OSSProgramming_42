@@ -18,7 +18,8 @@ git clone <레포지토리 URL>
 cd project
 pip install -r requirements.txt
 ```
-프로젝트 파일 다운로드 및 환경 구축 후, 터미널에 app:app --
+프로젝트 파일 다운로드 후, 가상환경 실행하여 프로젝트 파일 경로로 이동한 뒤 requirements를 설치합니다.
+이후 터미널에서 uvicorn app:app --reload 입력하고, 브라우저에 터미널의 링크를 입력하여 실행합니다.
 
 ---
 
